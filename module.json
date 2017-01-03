@@ -1,0 +1,23 @@
+{
+	"dependencies": [],
+	"singleton": true,
+	"category": "support_external_ui",
+	"author": "Karl Otto",
+	"homepage": "https://github.com/kotto83/FibaroAPI",
+	"icon": "icon.png",
+	"moduleName": "FibaroAPI",
+	"version": "0.0.1",
+	"maturity": "beta",
+	"repository": {
+		"type": "git",
+		"source": "https://github.com/kotto83/FibaroAPI"
+	},
+	"defaults": {
+		"title": "__m_title__",
+		"description": "__m_descr__"
+	},
+	"schema": {
+	},
+	"options": {
+	}
+}

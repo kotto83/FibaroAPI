@@ -1,0 +1,119 @@
+{
+    "lastAlarmTime": 0,
+    "triggerActions": [{
+        "id": 1,
+        "name": "Panic",
+        "description": "Switch on selected lights, close selected blinds, send selected cameras screens and selected notifications.",
+        "time": 0,
+        "isPredefined": true,
+        "isActive": false,
+        "properties": {
+            "conditions": [{
+                "type": "com.fibaro.binarySwitch",
+                "properties": [{
+                    "name": "isLight",
+                    "value": "1"
+                }]
+            }, {
+                "type": "com.fibaro.multilevelSwitch",
+                "properties": [{
+                    "name": "isLight",
+                    "value": "1"
+                }]
+            }, {
+                "type": "com.fibaro.rollerShutter",
+                "properties": []
+            }, {
+                "type": "com.fibaro.ipCamera",
+                "properties": []
+            }],
+            "devices": [0],
+            "notifications": [0]
+        }
+    }, {
+        "id": 2,
+        "name": "Lights On",
+        "description": "Switch on selected lights or all lights in the house.",
+        "time": 0,
+        "isPredefined": true,
+        "isActive": false,
+        "properties": {
+            "conditions": [{
+                "type": "com.fibaro.binarySwitch",
+                "properties": [{
+                    "name": "isLight",
+                    "value": "1"
+                }]
+            }, {
+                "type": "com.fibaro.multilevelSwitch",
+                "properties": [{
+                    "name": "isLight",
+                    "value": "1"
+                }]
+            }],
+            "devices": [0]
+        }
+    }, {
+        "id": 3,
+        "name": "Blinds close",
+        "description": "Close selected blinds or all blinds in the house.",
+        "time": 0,
+        "isPredefined": true,
+        "isActive": false,
+        "properties": {
+            "conditions": [{
+                "type": "com.fibaro.rollerShutter",
+                "properties": []
+            }],
+            "devices": [0]
+        }
+    }, {
+        "id": 4,
+        "name": "Emergency lights",
+        "description": "Switch selected lights or all lights in the house to emergency mode.",
+        "time": 0,
+        "isPredefined": true,
+        "isActive": false,
+        "properties": {
+            "conditions": [{
+                "type": "com.fibaro.binarySwitch",
+                "properties": [{
+                    "name": "isLight",
+                    "value": "1"
+                }]
+            }, {
+                "type": "com.fibaro.multilevelSwitch",
+                "properties": [{
+                    "name": "isLight",
+                    "value": "1"
+                }]
+            }],
+            "devices": [0]
+        }
+    }, {
+        "id": 5,
+        "name": "Send screens",
+        "description": "Send screens from selected cameras or all cameras in the house.",
+        "time": 0,
+        "isPredefined": true,
+        "isActive": false,
+        "properties": {
+            "conditions": [{
+                "type": "com.fibaro.ipCamera",
+                "properties": []
+            }],
+            "devices": [0]
+        }
+    }, {
+        "id": 7,
+        "name": "Send notifications",
+        "description": "Send selected or all notifications defined in the system.",
+        "time": 0,
+        "isPredefined": true,
+        "isActive": false,
+        "properties": {
+            "notifications": [0]
+        }
+    }],
+    "fastAccessActors": []
+}
