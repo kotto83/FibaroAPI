@@ -255,7 +255,7 @@ FibaroAPI.prototype.registerWeb = function() {
                             property = "value";
                             break;
                         case "switchMultilevel":
-                            value = dev.get("metrics:level");
+                            value = dev.get("metrics:level") || 0;
                             type = "com.fibaro.binarySwitch";
                             property = "value";
                             break;
@@ -273,7 +273,7 @@ FibaroAPI.prototype.registerWeb = function() {
                             property = "value";
                             break;
                         case "sensorMultilevel":
-                            value = dev.get("metrics:level");
+                            value = dev.get("metrics:level") || 0;
                             type = "com.fibaro.sensorMulilevel";
                             property = "value";
                             break;
@@ -558,7 +558,10 @@ FibaroAPI.prototype.registerWeb = function() {
                                     "value": value.toString(10)
                                 }
                             });
-                            if (struct.interfaces.indexOf("power") !== -1) struct.properties.power = self.controller.devices.get(zwayObj.vDevMasterId + "-50-2").get("metrics:level").toString(10);
+                            if (struct.interfaces.indexOf("power") !== -1) {
+                                var _val = self.controller.devices.get(zwayObj.vDevMasterId + "-50-2").get("metrics:level");
+                                if (_val !== null) struct.properties.power = _val.toString(10);
+                            }
                             if (deviceType === "switchMultilevel") struct.interfaces.push("levelChange");
                             ret.body.devices.push(struct);
                             break;
@@ -603,7 +606,7 @@ FibaroAPI.prototype.registerWeb = function() {
                             break;
                         case "sensorMultilevel":
                             var dead = 0,
-                                value = dev.get("metrics:level"),
+                                value = dev.get("metrics:level") || 0,
                                 interfaces = [ ];
                             
                             if (zwayObj) {
