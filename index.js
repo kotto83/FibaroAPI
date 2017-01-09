@@ -183,10 +183,10 @@ FibaroAPI.prototype.registerWeb = function() {
 	        if (req.query.action === "login")	        
                     return {
                         status: 200,
-                        headers: [{
+                        headers: {
                             "Content-Type": "application/json;charset=UTF-8"
-                        }],
-                        body: {"status": true, "userID": 2, "username": self.config.login, "type": "superuser"}
+                        },
+                        body: {"status": true, "userID": 2, "username": profile.login, "type": "superuser"}
                     };
                 break;
             case "/api/mobile/interface/refreshStates":
@@ -294,9 +294,9 @@ FibaroAPI.prototype.registerWeb = function() {
 
                 return {
                     status: 200,
-                    headers: [{
+                    headers: {
                         "Content-Type": "application/json;charset=UTF-8"
-                    }],
+                    },
                     body: {
                         "status": "IDLE",
                         "last": last,
@@ -311,17 +311,64 @@ FibaroAPI.prototype.registerWeb = function() {
             case "/api/modules":
                 return {
                     status: 200,
-                    headers: [{
+                    headers: {
                         "Content-Type": "application/json;charset=UTF-8"
-                    }],
+                    },
                     body: []
+                };
+            case "/api/weather":
+                return {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json;charset=UTF-8"
+                    },
+                    body: {
+                        "ConditionCode": "32",
+                        "Humidity": "0.00",
+                        "PreviousConditionCode": "32",
+                        "PreviousHumidity": "0.00",
+                        "PreviousTemperature": "0.00",
+                        "PreviousWeatherConditionConverted": "\\\"cloudy\\\"",
+                        "PreviousWind": "0.00",
+                        "Temperature": "0",
+                        "WeatherCondition": "rain",
+                        "WeatherConditionConverted": "cloudy",
+                        "Wind": "0.00",
+                        "saveLogs": "1",
+                        "TemperatureUnit": "C"
+                    }
+                };
+            case "/api/settings/location":
+                var d = new Date();
+                return {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json;charset=UTF-8"
+                    },
+                    body: {
+                        "houseNumber": 3,
+                        "timezone": "Europe/Berlin",
+                        "timezoneOffset": 7200,
+                        "ntp": false,
+                        "ntpServer": "pool.ntp.org",
+                        "date": { "day": d.getDay(), "month": d.getMonth(), "year": d.getYear() },
+                        "time": { "hour": d.getHours(), "minute": d.getMinutes() },
+                        "latitude": 52.25,
+                        "longitude": 16.53,
+                        "city": "Poznan",
+                        "temperatureUnit": "C",
+                        "windUnit": "km/h",
+                        "timeFormat": 24,
+                        "dateFormat": "dd.mm.yy",
+                        "decimalMark": "."
+                    }
                 };
             case "/api/mobile/registerDevice":
                 return {
                     status: 200,
-                    headers: [{
+                    headers: {
                         "Content-Type": "application/json;charset=UTF-8"
-                    }],
+                    },
                     body: {"mobileDeviceId": 24, "sipDisplayName":""}
                 };
             case "/api/callAction":
@@ -342,9 +389,9 @@ FibaroAPI.prototype.registerWeb = function() {
                 }
                 return {
                     status: 202,
-                    headers: [{
+                    headers: {
                         "Content-Type": "application/json;charset=UTF-8"
-                    }],
+                    },
                     body: { "id":0, "jsonrpc": "2.0", "result": { "result": 0 }} // no idea what it means
                 }
                 break;
