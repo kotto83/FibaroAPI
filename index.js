@@ -222,6 +222,10 @@ FibaroAPI.prototype.registerWeb = function() {
                             value = dev.get("metrics:level");
                             property = "value";
                             break;
+                        case "thermostat":
+                            value = dev.get("metrics:level");
+                            property = "value";
+                            break;
                     }
                     
                     var devMap = getDevMapByVDevId(dev.id);
@@ -243,6 +247,7 @@ FibaroAPI.prototype.registerWeb = function() {
                 }).map(function(dev) {
                     var deviceType = dev.get("deviceType"),
                         probeType = dev.get("probeType"),
+                        zwayIcon = dev.get("metrics:icon"),
                         property,
                         value,
                         lastBreached,
@@ -268,6 +273,20 @@ FibaroAPI.prototype.registerWeb = function() {
                                 case "motion":
                                     type = "com.fibaro.motionSensor";
                                     break;
+                                case "general_purpose":
+                                    switch (zwayIcon) {
+                                        case "door":
+                                            type = "com.fibaro.doorSensor";
+                                            break;
+                                        case "motion":
+                                            console.log("found Aeon motion sensor");
+                                            type = "com.fibaro.motionSensor";
+                                            break;
+                                    }
+                                    break;
+                                case "alarm_burglar":
+                                    type = "com.fibaro.tamperDetector";
+                                    break;
                             }
                             lastBreached = dev.get("updateTime");
                             property = "value";
@@ -275,6 +294,11 @@ FibaroAPI.prototype.registerWeb = function() {
                         case "sensorMultilevel":
                             value = dev.get("metrics:level") || 0;
                             type = "com.fibaro.sensorMulilevel";
+                            property = "value";
+                            break;
+                        case "thermostat":
+                            value = dev.get("metrics:level") || 0;
+                            type = "com.fibaro.thermostatDanfoss";
                             property = "value";
                             break;
                     }
@@ -384,6 +408,9 @@ FibaroAPI.prototype.registerWeb = function() {
                         self.controller.devices.get(dm.vDevId).performCommand(req.query.name === "turnOn" ? "on" : "off");
                         break;
                     case "setValue":
+                        self.controller.devices.get(dm.vDevId).performCommand("exact", { level: parseInt(req.query.arg1, 10) });
+                        break;
+                    case "setTargetLevel":
                         self.controller.devices.get(dm.vDevId).performCommand("exact", { level: parseInt(req.query.arg1, 10) });
                         break;
                 }
@@ -517,6 +544,7 @@ FibaroAPI.prototype.registerWeb = function() {
                     var zwayObj = getZWayByVDevId(dev.id);
                     var deviceType = dev.get("deviceType"),
                         probeType = dev.get("probeType"),
+                        zwayIcon = dev.get("metrics:icon"),
                         scaleTitle = dev.get("metrics:scaleTitle");
                         
                     var icon, baseType, type, unit, deviceControlType;
@@ -535,18 +563,57 @@ FibaroAPI.prototype.registerWeb = function() {
                             deviceControlType = "23";
                             break;
                         case "sensorBinary":
-                            baseType = "com.fibaro.securitySensor";
                             deviceControlType = "0";
                             switch (probeType) {
                                 case "door-window":
                                     icon = 42;
+                                    baseType = "com.fibaro.doorWindowSensor";
                                     type = "com.fibaro.doorSensor";
                                     break;
                                 case "motion":
                                     icon = 21;
+                                    baseType = "com.fibaro.securitySensor";
                                     type = "com.fibaro.motionSensor";
                                     break;
+                                // TODO: shown on UI - but not updated
+                                case "alarm_burglar":
+                                    icon = 94;
+                                    baseType = "com.fibaro.sensor";
+                                    type = "com.fibaro.seismometer";
+                                    break;
+                                case "alarm_smoke":
+                                    icon = 69;
+                                    baseType = "com.fibaro.SmokeDetector";
+                                    type = "com.fibaro.FGSS-001";
+                                    break;
+                                // TODO: not shown on UI - why?
+                                case "alarm_heat":
+                                    icon = 88;
+                                    baseType = "com.fibaro.binarySensor";
+                                    type = "com.fibaro.heatDetector";
+                                    break;                                    
+                                // fix for AEON door and motion sensor
+                                case "general_purpose":
+                                    switch (zwayIcon) {
+                                        case "door":
+                                            icon = 44;
+                                            baseType = "com.fibaro.securitySensor";
+                                            type = "com.fibaro.doorSensor";
+                                            break;
+                                        case "motion":
+                                            icon = 90;
+                                            baseType = "com.fibaro.securitySensor";
+                                            type = "com.fibaro.FGMS001";
+                                            break;
+                                    }
+                                    break;
                             }
+                            break;
+                        case "thermostat":
+                            icon = 34;
+                            baseType = "com.fibaro.thermostat";
+                            type = "com.fibaro.thermostatDanfoss";
+                            deviceControlType = "0";
                             break;
                         case "sensorMultilevel":
                             baseType = "com.fibaro.multilevelSensor";
@@ -561,6 +628,15 @@ FibaroAPI.prototype.registerWeb = function() {
                                 case "luminosity":
                                     icon = 32;
                                     type = "com.fibaro.lightSensor";
+                                    break;
+                                case "humidity":
+                                    icon = 31;
+                                    type = "com.fibaro.humiditySensor";
+                                    break;
+                                case "ultraviolet":
+                                    icon = 32;
+                                    type = "com.fibaro.lightSensor";
+                                    unit = " UV";
                                     break;
                             }
                             break;
@@ -580,6 +656,34 @@ FibaroAPI.prototype.registerWeb = function() {
                     
                     switch (deviceType) {
                         case "switchBinary":
+                        case "thermostat":
+                            var dead = 0,
+                                value = dev.get("metrics:level"),
+                                interfaces = [ ]; //"zwaveProtection" ];
+
+                            console.log(dev.get("id"), dead, deviceControlType, value);
+                            
+                            if (zwayObj) {
+                                interfaces.push("zwave");
+                                // TODO uncomment this once handler for isFailed is implemented
+                                // dead = ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isFailed.value ? 1 : 0;
+                                if (!ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isListening.value) interfaces.push("zwaveWakeup");
+
+                                if (self.controller.devices.get(zwayObj.vDevRootId + "-0-128")) {
+                                    interfaces.push("battery");
+                                }
+                            }
+                            _.extend(struct, {
+                                "interfaces": interfaces,
+                                "properties": {
+                                    "dead": dead.toString(10),
+                                    "deviceControlType": deviceControlType,
+                                    "targetLevel": value.toString(10),
+                                    "value": value.toString(10)
+                                }
+                            });
+                            ret.body.devices.push(struct);
+                            break;
                         case "switchMultilevel":
                             var dead = 0,
                                 value = dev.get("metrics:level") === "on" ? 1 : 0,
