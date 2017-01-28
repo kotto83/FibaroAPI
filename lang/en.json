@@ -1,4 +1,4 @@
 {
 	"m_title":"Fibaro API implementation",
-	"m_descr":"Allows to use Fibaro mobile apps with Z-Way"
+	"m_descr":"Allows to use Fibaro mobile apps with Z-Way. On Raspberry Pi make sure that port 80 is not occupied by another program like Apache."
 }

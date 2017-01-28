@@ -6,7 +6,9 @@ So far working only with switches, dimmers, motion, door, temperature and lumina
 
 Use any user to log in. Not only admin is supported.
 
-NB! This app binds on port 80, hence Z-Way must be executed from root! (which is usually the case)
+NB! This app binds on port 80, hence Z-Way must be executed from root! (which is usually the case).
+
+NB! Port 80 might be occupied by another web server like Apache. Turn off any program binding to port 80.
 
 NB! If you experience authorization problems, you might want to update Z-Way to versions upper to 2.3.0-rc4.
 
