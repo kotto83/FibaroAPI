@@ -6,7 +6,7 @@
 	"homepage": "https://github.com/kotto83/FibaroAPI",
 	"icon": "icon.png",
 	"moduleName": "FibaroAPI",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"maturity": "stable",
 	"repository": {
 		"type": "git",
@@ -14,10 +14,25 @@
 	},
 	"defaults": {
 		"title": "__m_title__",
-		"description": "__m_descr__"
+		"description": "__m_descr__",
+		"HCName": ""
 	},
 	"schema": {
+		"type": "object",
+		"properties": {
+			"HCName": {
+				"type": "string",
+				"readonly": true
+			}
+		},
+		"required": false
 	},
 	"options": {
-	}
+		"fields": {
+			"HCName": {
+				"label": "ID"
+			}
+		}
+	},
+	"postRender": "loadFunction:postRender.js"
 }
