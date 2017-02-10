@@ -1,6 +1,6 @@
 /*** FibaroAPI for Z-Way********** *******************************************
 
-Version: 0.0.3
+Version: 0.0.4
 ------------------------------------------------------------------------------
 Author: Karl Otto
 Description:
@@ -96,7 +96,11 @@ FibaroAPI.prototype.pad = function(num, n) {
 
 // Filter devices by user profile
 FibaroAPI.prototype.devicesByUser = function(profile, filter) {
-    var devices = this.controller.devices.filter(filter);
+    var devices = this.controller.devices.filter(function(vDev) { return !vDev.permanently_hidden; });
+    
+    if (filter) {
+        devices = devices.filter(filter);
+    }
 
     if (!profile) {
         return [];
@@ -161,7 +165,7 @@ FibaroAPI.prototype.registerWeb = function() {
         }
         
         function getZWayByVDevId(id) {
-            var pattern = "((ZWayVDev_([^_]+)_([0-9]+))-([0-9]+))((-[0-9]+)*)",
+            var pattern = "^((ZWayVDev_([^_]+)_([0-9]+))-([0-9]+))((-[0-9]+)*)",
                 match = id.match(pattern);
 
             if (match) {
