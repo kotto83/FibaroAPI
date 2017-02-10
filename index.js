@@ -372,6 +372,23 @@ FibaroAPI.prototype.registerWeb = function() {
                         "TemperatureUnit": "C"
                     }
                 };
+            case "/api/panels/event":
+                return {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json;charset=UTF-8"
+                    },
+                    body: {
+//                        "id": 8126,
+//                        "type": "DEVICE_EVENT",
+//                        "timestamp": 1404723546,
+//                        "deviceID": 1701,
+//                        "deviceType": "com.fibaro.temperatureSensor",
+//                        "propertyName": "value",
+//                        "oldValue": 28.6,
+//                        "newValue": 26.7
+                    }
+                };
             case "/api/settings/location":
                 var d = new Date();
                 return {
@@ -540,7 +557,7 @@ FibaroAPI.prototype.registerWeb = function() {
                     "properties": {}
                 });
 
-                self.controller.devices.forEach(function(dev) {
+                self.devicesByUser(profile).forEach(function(dev) {
                     var devMap = getDevMapByVDevId(dev.id);
                     if (!devMap) devMap = createMap(dev.id);
 
@@ -710,13 +727,30 @@ FibaroAPI.prototype.registerWeb = function() {
                                 // Fibaro ConditionCodes == Yahoo weather codes, but hard to "translate" openWeather to Yahoo codes.
                                 // TODO: weather_conditions.json is more or less a WIP - should be revised for better codes mapping.
                                 var fibaroConditionCodes = self.loadModuleJSON("weather_conditions.json");
+                                var finalConditionCode = fibaroConditionCodes[weather_conditionCode];
+                                
+                                // change to night icons from 7pm to 7am
+                                // TODO: make night time selectable for user
+                                var d = new Date();
+                                var isNight = (d.getHours() > 19 || d.getHours() < 7);
+
+                                if(finalConditionCode === 28 && isNight) {
+                                    finalConditionCode = 27;
+                                }
+                                else if (finalConditionCode === 30 && isNight) {
+                                    finalConditionCode = 29;
+                                }
+                                else if (finalConditionCode === 32 && isNight) {
+                                    finalConditionCode = 31;
+                                }
+
                                 var weather_struct = {
                                     "Temperature": weather_temp,
                                     "TemperatureUnit": weather_temp_unit,
                                     "Humidity": weather_humidity,
                                     "Wind": weather_wind,
                                     "WindUnit": "km/h",
-                                    "ConditionCode": fibaroConditionCodes[weather_conditionCode],
+                                    "ConditionCode": finalConditionCode,
                                     "WeatherCondition": weather_conditionText
                                     };
                                 ret.body.weather = weather_struct;
