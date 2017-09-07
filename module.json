@@ -6,7 +6,7 @@
 	"homepage": "https://github.com/kotto83/FibaroAPI",
 	"icon": "icon.png",
 	"moduleName": "FibaroAPI",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"maturity": "stable",
 	"repository": {
 		"type": "git",

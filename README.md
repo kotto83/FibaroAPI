@@ -29,3 +29,6 @@ Wireshark (tcpdump) can also help to see which requests are sent by the mobile a
 Project page: https://github.com/kotto83/FibaroAPI
 
 License: GNU GPLv3
+
+ChangeLog:
+- 0.0.6 - fixed problem caused by new salted style of Z-Way passwords
