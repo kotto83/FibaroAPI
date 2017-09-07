@@ -132,9 +132,10 @@ FibaroAPI.prototype.registerWeb = function() {
         if (authHeader && authHeader.substring(0, 6) === "Basic ") {
             authHeader = Base64.decode(authHeader.substring(6));
             var login = authHeader.split(":")[0];
+            var passwd = authHeader.split(":")[1];
             if (authHeader) {
                 var _profile = self.controller.profiles.filter(function(profile) { return profile.login === login; })[0];
-                if (_profile && authHeader === login + ":" + _profile.password) {
+                if (_profile && ((!_profile.salt && _profile.password === passwd) || (_profile.salt && _profile.password === hashPassword(passwd, _profile.salt)))) {
                     profile = _profile;
                 }
             }
