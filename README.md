@@ -31,4 +31,4 @@ Project page: https://github.com/kotto83/FibaroAPI
 License: GNU GPLv3
 
 ChangeLog:
-- 0.0.6 - fixed problem caused by new salted style of Z-Way passwords
+- 0.0.6 - fixed problem caused by new salted style of Z-Way passwords; added better usage description

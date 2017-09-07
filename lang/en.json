@@ -1,4 +1,4 @@
 {
 	"m_title":"Fibaro API implementation",
-	"m_descr":"Allows to use Fibaro mobile apps with Z-Way. On Raspberry Pi make sure that port 80 is not occupied by another program like Apache."
+	"m_descr":"Allows to use Fibaro mobile apps with Z-Way.<br/><br/>To set up the Fibaro App you need to skip the Fibaro ID registration: on Fibaro ID screen press &laquo;Son't shoow again, login is available from settings&raquo;. On the next screen press on (i) and select Add Manually. Then asked for Serial and IP, enter HCL-123456 (can be any valid serial) and the IP of your RaZberry. On the next screen enter the login and password of your RaZberry. Done!<br/><br/>If you already have some Home Centers connected, go to Settings, Select Home Center, choose HCZ-xxxxxx from the list of detected devices and enter login and password.<br/><br/>On Raspberry Pi make sure that port 80 is not occupied by another program like Apache."
 }
