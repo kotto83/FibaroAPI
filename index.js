@@ -127,7 +127,7 @@ FibaroAPI.prototype.registerWeb = function() {
     this.ws = new WebServer(80, function(req) {
         var profile;
         
-	// Check Basic Authorization
+    // Check Basic Authorization
         var authHeader = req.headers['Authorization'];
         if (authHeader && authHeader.substring(0, 6) === "Basic ") {
             authHeader = Base64.decode(authHeader.substring(6));
@@ -183,9 +183,9 @@ FibaroAPI.prototype.registerWeb = function() {
 
         if (0 || 0 && req.url !== "/api/mobile/interface/refreshStates") console.logJS(req); // Debug output (change 0 => 1, first is very verbose, second less verbose)
         
-	switch (req.url) {
-	    case "/api/loginStatus":
-	        if (req.query.action === "login")	        
+    switch (req.url) {
+        case "/api/loginStatus":
+            if (req.query.action === "login")
                     return {
                         status: 200,
                         headers: {
@@ -210,6 +210,11 @@ FibaroAPI.prototype.registerWeb = function() {
                         value, oldValue;
                     
                     switch (deviceType) {
+                        // TODO: strange behaviour on Android - status seems not to be updated correctly
+                        case "switchRGBW":
+                            value = dev.get("metrics:level") === "on";
+                            property = "value";
+                            break;
                         case "switchBinary":
                             value = dev.get("metrics:level") === "on";
                             //oldValue = !value; // not used
@@ -224,6 +229,10 @@ FibaroAPI.prototype.registerWeb = function() {
                             property = "value";
                             break;
                         case "sensorMultilevel":
+                            value = dev.get("metrics:level");
+                            property = "value";
+                            break;
+                        case "thermostat":
                             value = dev.get("metrics:level");
                             property = "value";
                             break;
@@ -248,12 +257,18 @@ FibaroAPI.prototype.registerWeb = function() {
                 }).map(function(dev) {
                     var deviceType = dev.get("deviceType"),
                         probeType = dev.get("probeType"),
+                        zwayIcon = dev.get("metrics:icon"),
                         property,
                         value,
                         lastBreached,
                         type;
                     
                     switch (deviceType) {
+                        case "switchRGBW":
+                            value = dev.get("metrics:level") === "on" ? 1 : 0;
+                            type = "com.fibaro.FGRGBW441M";
+                            property = "value";
+                            break;
                         case "switchBinary":
                             value = dev.get("metrics:level") === "on" ? 1 : 0;
                             type = "com.fibaro.binarySwitch";
@@ -273,6 +288,20 @@ FibaroAPI.prototype.registerWeb = function() {
                                 case "motion":
                                     type = "com.fibaro.motionSensor";
                                     break;
+                                case "general_purpose":
+                                    switch (zwayIcon) {
+                                        case "door":
+                                            type = "com.fibaro.doorSensor";
+                                            break;
+                                        case "motion":
+                                            console.log("found Aeon motion sensor");
+                                            type = "com.fibaro.motionSensor";
+                                            break;
+                                    }
+                                    break;
+                                case "alarm_burglar":
+                                    type = "com.fibaro.tamperDetector";
+                                    break;
                             }
                             lastBreached = dev.get("updateTime");
                             property = "value";
@@ -282,8 +311,13 @@ FibaroAPI.prototype.registerWeb = function() {
                             type = "com.fibaro.sensorMulilevel";
                             property = "value";
                             break;
+                        case "thermostat":
+                            value = dev.get("metrics:level") || 0;
+                            type = "com.fibaro.thermostatDanfoss";
+                            property = "value";
+                            break;
                     }
-                    
+
                     var devMap = getDevMapByVDevId(dev.id);
                     if (!devMap) return undefined;
                     
@@ -343,6 +377,23 @@ FibaroAPI.prototype.registerWeb = function() {
                         "TemperatureUnit": "C"
                     }
                 };
+            case "/api/panels/event":
+                return {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json;charset=UTF-8"
+                    },
+                    body: {
+//                        "id": 8126,
+//                        "type": "DEVICE_EVENT",
+//                        "timestamp": 1404723546,
+//                        "deviceID": 1701,
+//                        "deviceType": "com.fibaro.temperatureSensor",
+//                        "propertyName": "value",
+//                        "oldValue": 28.6,
+//                        "newValue": 26.7
+                    }
+                };
             case "/api/settings/location":
                 var d = new Date();
                 return {
@@ -391,6 +442,11 @@ FibaroAPI.prototype.registerWeb = function() {
                     case "setValue":
                         self.controller.devices.get(dm.vDevId).performCommand("exact", { level: parseInt(req.query.arg1, 10) });
                         break;
+                    case "setTargetLevel":
+                        self.controller.devices.get(dm.vDevId).performCommand("exact", { level: parseInt(req.query.arg1, 10) });
+                        break;
+                    case "setColor":
+                        self.controller.devices.get(dm.vDevId).performCommand("exact", { red: parseInt(req.query.arg1, 10), green: parseInt(req.query.arg2, 10), blue: parseInt(req.query.arg3, 10)});
                 }
                 return {
                     status: 202,
@@ -426,14 +482,7 @@ FibaroAPI.prototype.registerWeb = function() {
                                 },
                                 "currency": "EUR"
                             },
-                            "weather": {
-                                "conditionCode": 32,
-                                "humidity": 0,
-                                "wind": 0,
-                                "windUnit": "km/h",
-                                "temperature": 0,
-                                "temperatureUnit": "C"
-                            },
+                            "weather": {},
                             "sections": [],
                             "rooms":[],
                             "devices": [],
@@ -448,7 +497,7 @@ FibaroAPI.prototype.registerWeb = function() {
                             "rgbPrograms": self.loadModuleJSON("rgbPrograms.json")
                         }
                 };
-                
+
                 var lorder = 0;
                 self.controller.locations.forEach(function(loc) {
                     if (loc.id !== 0) {
@@ -482,8 +531,8 @@ FibaroAPI.prototype.registerWeb = function() {
                     "type": "HC_user",
                     "properties": {}
                 });
-                
-                // Add weather info
+
+                // Add weather info - what's the sense of this part?!
                 ret.body.devices.push({
                     "id": 3,
                     "name": "weather",
@@ -497,11 +546,11 @@ FibaroAPI.prototype.registerWeb = function() {
                     "type": "weather",
                     "properties": {}
                 });
-                
+
                 // Add mobile registered device
                 ret.body.devices.push({
                     "id": 24,
-                    "name": "Some phone model",
+                    "name": "Some device",
                     "roomId": 0,
                     "iconId": 91,
                     "sortOrder": 6,
@@ -512,18 +561,19 @@ FibaroAPI.prototype.registerWeb = function() {
                     "type": "iOS_device",
                     "properties": {}
                 });
-                
+
                 self.devicesByUser(profile).forEach(function(dev) {
                     var devMap = getDevMapByVDevId(dev.id);
                     if (!devMap) devMap = createMap(dev.id);
-                    
+
                     var zwayObj = getZWayByVDevId(dev.id);
                     var deviceType = dev.get("deviceType"),
                         probeType = dev.get("probeType"),
+                        zwayIcon = dev.get("metrics:icon"),
                         scaleTitle = dev.get("metrics:scaleTitle");
-                        
+
                     var icon, baseType, type, unit, deviceControlType;
-                    
+
                     switch (deviceType) {
                         case "switchBinary":
                             icon = 2;
@@ -537,19 +587,77 @@ FibaroAPI.prototype.registerWeb = function() {
                             type = "com.fibaro.multilevelSwitch";
                             deviceControlType = "23";
                             break;
+                        case "sensorMultiline":
+                            // true if openWeather MultilineType is found, used later for api response creation
+                            var weather_element = false;
+                            if(dev.get("metrics:multilineType") === "openWeather") {
+                                var weather_element = true;
+                                var weather_conditionCode = dev.get("metrics:zwaveOpenWeather:weather")[0].id.toString();
+                                var weather_conditionText = dev.get("metrics:zwaveOpenWeather:weather")[0].description;     // do we need this text, is it shown in the UI?
+                                var weather_humidity = dev.get("metrics:zwaveOpenWeather:main:humidity");
+                                var weather_wind = dev.get("metrics:zwaveOpenWeather:wind:speed"); 
+                                var weather_wind_unit = "km/h";
+                                var weather_temp = dev.get("metrics:level");
+                                var weather_temp_unit = dev.get("metrics:scaleTitle");
+                            }
+                            break;
                         case "sensorBinary":
-                            baseType = "com.fibaro.securitySensor";
                             deviceControlType = "0";
                             switch (probeType) {
                                 case "door-window":
                                     icon = 42;
+                                    baseType = "com.fibaro.doorWindowSensor";
                                     type = "com.fibaro.doorSensor";
                                     break;
                                 case "motion":
                                     icon = 21;
+                                    baseType = "com.fibaro.securitySensor";
                                     type = "com.fibaro.motionSensor";
+                                    break
+                                case "alarm_burglar":
+                                    icon = 94;
+                                    baseType = "com.fibaro.sensor";
+                                    type = "com.fibaro.seismometer";
+                                    break;
+                                case "alarm_smoke":
+                                    icon = 69;
+                                    baseType = "com.fibaro.SmokeDetector";
+                                    type = "com.fibaro.FGSS-001";
+                                    break;
+                                // TODO: only shown on iOS apps - why?
+                                case "alarm_heat":
+                                    icon = 88;
+                                    baseType = "com.fibaro.binarySensor";
+                                    type = "com.fibaro.heatDetector";
+                                    break;
+                                // fix for AEON door and motion sensor
+                                case "general_purpose":
+                                    switch (zwayIcon) {
+                                        case "door":
+                                            icon = 44;
+                                            baseType = "com.fibaro.securitySensor";
+                                            type = "com.fibaro.doorSensor";
+                                            break;
+                                        case "motion":
+                                            icon = 90;
+                                            baseType = "com.fibaro.securitySensor";
+                                            type = "com.fibaro.FGMS001";
+                                            break;
+                                    }
                                     break;
                             }
+                            break;
+                        case "switchRGBW":
+                            icon = 15;
+                            baseType = "com.fibaro.rgbController";
+                            type = "com.fibaro.FGRGBW441M";
+                            deviceControlType = "50";
+                            break;
+                        case "thermostat":
+                            icon = 34;
+                            baseType = "com.fibaro.thermostat";
+                            type = "com.fibaro.thermostatDanfoss";
+                            deviceControlType = "0";
                             break;
                         case "sensorMultilevel":
                             baseType = "com.fibaro.multilevelSensor";
@@ -565,10 +673,46 @@ FibaroAPI.prototype.registerWeb = function() {
                                     icon = 32;
                                     type = "com.fibaro.lightSensor";
                                     break;
+                                case "humidity":
+                                    icon = 31;
+                                    type = "com.fibaro.humiditySensor";
+                                    break;
+                                case "ultraviolet":
+                                    icon = 32;
+                                    type = "com.fibaro.lightSensor";
+                                    unit = " UV";
+                                    break;
+
+                                // TODO: all energy elements just shown up on iOS app, but without values
+                                case "meterElectric_kilowatt_hour":
+                                    icon = 102;
+                                    type = "com.fibaro.energyMeter";
+                                    unit = "kWh";
+                                    break;
+                                case "meterElectric_watt":
+                                    icon = 102;
+                                    type = "com.fibaro.energyMeter";
+                                    unit = "W";
+                                    break;
+                                case "meterElectric_voltage":
+                                    icon = 102;
+                                    type = "com.fibaro.energyMeter";
+                                    unit = "V";
+                                    break;
+                                case "meterElectric_ampere":
+                                    icon = 102;
+                                    type = "com.fibaro.energyMeter";
+                                    unit = "A";
+                                    break;
+                                case "meterElectric_power_factor":
+                                    icon = 102;
+                                    type = "com.fibaro.energyMeter";
+                                    unit = "Power Factor";
+                                    break;
                             }
                             break;
                     }
-                    
+
                     var struct = {
                         "id": devMap.fibaroId,
                         "name": dev.get("metrics:title"),
@@ -580,19 +724,60 @@ FibaroAPI.prototype.registerWeb = function() {
                         "baseType": baseType,
                         "type": type,
                     };
-                    
+
                     switch (deviceType) {
+                        case "sensorMultiline":
+                            // TODO: there are other possible multiLineTypes (e.g. MultiButton)
+                            if(weather_element) {
+                                // Fibaro ConditionCodes == Yahoo weather codes, but hard to "translate" openWeather to Yahoo codes.
+                                // TODO: weather_conditions.json is more or less a WIP - should be revised for better codes mapping.
+                                var fibaroConditionCodes = self.loadModuleJSON("weather_conditions.json");
+                                var finalConditionCode = fibaroConditionCodes[weather_conditionCode];
+                                
+                                // change to night icons from 7pm to 7am
+                                // TODO: make night time selectable for user
+                                var d = new Date();
+                                var isNight = (d.getHours() > 19 || d.getHours() < 7);
+
+                                if(finalConditionCode === 28 && isNight) {
+                                    finalConditionCode = 27;
+                                }
+                                else if (finalConditionCode === 30 && isNight) {
+                                    finalConditionCode = 29;
+                                }
+                                else if (finalConditionCode === 32 && isNight) {
+                                    finalConditionCode = 31;
+                                }
+
+                                var weather_struct = {
+                                    "Temperature": weather_temp,
+                                    "TemperatureUnit": weather_temp_unit,
+                                    "Humidity": weather_humidity,
+                                    "Wind": weather_wind,
+                                    "WindUnit": "km/h",
+                                    "ConditionCode": finalConditionCode,
+                                    "WeatherCondition": weather_conditionText
+                                    };
+                                ret.body.weather = weather_struct;
+                            }
+                            break;
                         case "switchBinary":
                         case "switchMultilevel":
                             var dead = 0,
                                 value = dev.get("metrics:level") === "on" ? 1 : 0,
-                                interfaces = [ "light" ];
-                            
+                                /*
+                                TODO: find way to set "light" as interface manually (maybe via tags?)
+                                don't set "light" as default anymore for all, this will prevent CodeDevices 
+                                and all switches to be added. This seems to be a much better solution, because
+                                it's preventing chaos - if the "switch all" button is used. ;)
+                                */
+                                interfaces = [];
+
                             if (zwayObj) {
                                 interfaces.push("zwave");
                                 // TODO uncomment this once handler for isFailed is implemented
                                 // dead = ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isFailed.value ? 1 : 0;
-                                
+
                                 if (self.controller.devices.get(zwayObj.vDevMasterId + "-50-0")) {
                                     interfaces.push("energy");
                                 }
@@ -615,6 +800,59 @@ FibaroAPI.prototype.registerWeb = function() {
                             if (deviceType === "switchMultilevel") struct.interfaces.push("levelChange");
                             ret.body.devices.push(struct);
                             break;
+                        case "thermostat":
+                            var dead = 0,
+                                value = dev.get("metrics:level"),
+                                interfaces = [ "zwaveProtection" ]; // maybe not as default?
+                            if (zwayObj) {
+                                interfaces.push("zwave");
+                                // TODO uncomment this once handler for isFailed is implemented
+                                // dead = ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isFailed.value ? 1 : 0;
+                                if (!ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isListening.value) interfaces.push("zwaveWakeup");
+
+                                if (self.controller.devices.get(zwayObj.vDevRootId + "-0-128")) {
+                                    interfaces.push("battery");
+                                }
+                            }
+                            _.extend(struct, {
+                                "interfaces": interfaces,
+                                "properties": {
+                                    "dead": dead.toString(10),
+                                    "deviceControlType": deviceControlType,
+                                    "targetLevel": value.toString(10),
+                                    "value": value.toString(10)
+                                }
+                            });
+                            ret.body.devices.push(struct);
+                            break;
+                        case "switchRGBW":
+                            var dead = 0,
+                                value = dev.get("metrics:level"),
+                                //RGB only: Z-Way is creating a MultiLevelSwitch for white
+                                color_r = dev.get("metrics:color:r"),
+                                color_g = dev.get("metrics:color:g"),
+                                color_b = dev.get("metrics:color:b"),
+                                interfaces = [ "energy", "levelChange", "light", "power"];
+
+                            if (zwayObj) {
+                                interfaces.push("zwave");
+                                // TODO uncomment this once handler for isFailed is implemented
+                                // dead = ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isFailed.value ? 1 : 0;
+                                if (!ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isListening.value) interfaces.push("zwaveWakeup");
+                            }
+                            _.extend(struct, {
+                                "interfaces": interfaces,
+                                "properties": {
+                                    "color": color_r+","+color_g+","+color_b+", 0", // white is unknown, set it always to 0
+                                    "dead": dead.toString(10),
+                                    "deviceControlType": deviceControlType,
+                                    "programsSortOrder": "1,2,3,4,5,172,451", // should we add this?
+                                    "rememberColor": "1",
+                                    "value": value.toString(10),
+                                }
+                            });
+                            ret.body.devices.push(struct);
+                            break;
                         case "sensorBinary":
                             // We currently don't support Arm - not needed for mobile UI
                             // Disarm will work with any pin
@@ -624,7 +862,7 @@ FibaroAPI.prototype.registerWeb = function() {
                                 interfaces = [ "fibaroBreach", "fibaroAlarm", "fibaroAlarmArm" ];
                             
                             if (zwayObj) {
-                                interfaces.push("zwave");                                
+                                interfaces.push("zwave");
                                 // TODO uncomment this once handler for isFailed is implemented
                                 // dead = ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isFailed.value ? 1 : 0;
                                 if (!ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isListening.value) interfaces.push("zwaveWakeup");
@@ -658,9 +896,9 @@ FibaroAPI.prototype.registerWeb = function() {
                             var dead = 0,
                                 value = dev.get("metrics:level") || 0,
                                 interfaces = [ ];
-                            
+
                             if (zwayObj) {
-                                interfaces.push("zwave");                                
+                                interfaces.push("zwave");
                                 // TODO uncomment this once handler for isFailed is implemented
                                 // dead = ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isFailed.value ? 1 : 0;
                                 if (!ZWave[zwayObj.zwayName].zway.devices[zwayObj.zwayId].data.isListening.value) interfaces.push("zwaveWakeup");
@@ -681,13 +919,11 @@ FibaroAPI.prototype.registerWeb = function() {
                             break;
                     }
                 });
-                
                 return ret;
-	}
-	
-	return null;
+    }
+    return null;
     }, {
-	document_root: "htdocs/fibaro" // non existant path, no files will be served
+    document_root: "htdocs/fibaro" // non existant path, no files will be served
     });
 };
 
